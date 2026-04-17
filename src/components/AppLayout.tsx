@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Users,
@@ -55,7 +55,23 @@ interface AppSidebarProps {
 export function AppLayout({ children }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
   const location = useLocation();
+
+  // Sync avatar from localStorage
+  useEffect(() => {
+    const updateAvatar = () => {
+      const savedProfile = localStorage.getItem("user-profile");
+      if (savedProfile) {
+        const { avatarUrl: savedUrl } = JSON.parse(savedProfile);
+        setAvatarUrl(savedUrl || "");
+      }
+    };
+
+    updateAvatar();
+    window.addEventListener("storage", updateAvatar);
+    return () => window.removeEventListener("storage", updateAvatar);
+  }, []);
 
   return (
     <div className="min-h-screen flex w-full">
@@ -82,7 +98,7 @@ export function AppLayout({ children }: AppSidebarProps) {
           </div>
           {!collapsed && (
             <div className="animate-fade-in">
-              <h1 className="font-bold text-base text-sidebar-foreground">محامي برو</h1>
+              <h1 className="font-bold text-base text-sidebar-foreground">AvocatExpert</h1>
               <p className="text-[10px] text-sidebar-muted">نظام إدارة قانوني</p>
             </div>
           )}
@@ -158,7 +174,7 @@ export function AppLayout({ children }: AppSidebarProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="" alt="User" />
+                    <AvatarImage src={avatarUrl} alt="User" className="object-cover" />
                     <AvatarFallback className="gradient-primary text-primary-foreground text-sm font-bold">
                       م
                     </AvatarFallback>

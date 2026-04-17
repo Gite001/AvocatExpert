@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Camera, Save, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,18 @@ export default function ProfilePage() {
     avatarUrl: "",
   });
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("user-profile");
+    if (savedProfile) {
+      setProfile(JSON.parse(savedProfile));
+    }
+  }, []);
+
   const handleSave = () => {
+    localStorage.setItem("user-profile", JSON.stringify(profile));
+    // Trigger storage event for other components (like Header)
+    window.dispatchEvent(new Event("storage"));
     toast.success("تم حفظ التغييرات بنجاح");
   };
 
@@ -33,7 +44,14 @@ export default function ProfilePage() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfile((prev) => ({ ...prev, avatarUrl: reader.result as string }));
+        const newAvatarUrl = reader.result as string;
+        setProfile((prev) => {
+          const updated = { ...prev, avatarUrl: newAvatarUrl };
+          // Auto-save image to localStorage to keep it sync
+          localStorage.setItem("user-profile", JSON.stringify(updated));
+          window.dispatchEvent(new Event("storage"));
+          return updated;
+        });
         toast.info("تم تحميل الصورة بنجاح");
       };
       reader.readAsDataURL(file);
@@ -45,7 +63,12 @@ export default function ProfilePage() {
   };
 
   const removeAvatar = () => {
-    setProfile(prev => ({ ...prev, avatarUrl: "" }));
+    setProfile(prev => {
+      const updated = { ...prev, avatarUrl: "" };
+      localStorage.setItem("user-profile", JSON.stringify(updated));
+      window.dispatchEvent(new Event("storage"));
+      return updated;
+    });
   };
 
   return (
